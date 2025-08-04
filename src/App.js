@@ -71,20 +71,65 @@ function App() {
     return { progressInterval, messageInterval };
   };
 
+  // Función para verificar si existe el usuario con la cédula
+  const verifyUser = async (cedula) => {
+    try {
+      const response = await axios.post('http://localhost:3001/api/ced', {
+        id: cedula
+      });
+      
+      return {
+        exists: response.data.exists,
+        user: response.data.user,
+        success: response.data.success
+      };
+    } catch (error) {
+      if (error.response?.status === 404) {
+        return {
+          exists: false,
+          success: false,
+          error: 'Usuario no encontrado con la cédula proporcionada'
+        };
+      }
+      throw error;
+    }
+  };
+
   // Función para proceder a la captura de foto
-  const proceedToCapture = () => {
+  const proceedToCapture = async () => {
     if (!cedula.trim()) {
       setMessage("Por favor ingresa tu cédula");
       return;
     }
     
+    setLoading(true);
     setMessage("");
-    setStep("capture");
+    
+    try {
+      // Verificar si el usuario existe
+      const userVerification = await verifyUser(cedula);
+      
+      if (!userVerification.exists) {
+        setLoading(false);
+        setMessage("Usuario no encontrado con esa cédula. Verifica que el número sea correcto.");
+        return;
+      }
+      
+      // Si el usuario existe, guardar sus datos y proceder
+      setUserData(userVerification.user);
+      setLoading(false);
+      setStep("capture");
+      
+    } catch (error) {
+      console.error("Error verificando usuario:", error);
+      setLoading(false);
+      setMessage("Error al verificar la cédula. Inténtalo de nuevo.");
+    }
   };
 
   const captureAndSend = async () => {
-    if (!cedula.trim()) {
-      setMessage("Error: No se ha proporcionado cédula");
+    if (!cedula.trim() || !userData) {
+      setMessage("Error: No se ha proporcionado cédula o datos de usuario");
       return;
     }
     
@@ -280,14 +325,14 @@ function App() {
               disabled={loading || !cedula.trim()}
               className="btn btn-primary btn-full"
             >
-              {loading ? "⏳ Procesando..." : "📷 Continuar a Captura"}
+              {loading ? "🔍 Verificando usuario..." : "🎓 Verificar y Continuar"}
             </button>
           </div>
 
           {/* Instructions */}
           <div className="instructions">
             <p>
-              💡 <strong>Instrucciones:</strong> Después de ingresar tu cédula, podrás tomar una foto que se usará para generar tu imagen de graduación personalizada con IA.
+              💡 <strong>Instrucciones:</strong> Ingresa tu cédula para verificar que estés registrado en el sistema. Una vez verificado, podrás tomar una foto para generar tu imagen de graduación personalizada con IA.
             </p>
           </div>
 
