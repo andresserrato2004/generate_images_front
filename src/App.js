@@ -6,6 +6,9 @@ function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // URL base de la API desde variables de entorno
+  const API_URL = process.env.REACT_APP_API_URL;
+
   const [cedula, setCedula] = useState("");
   const [userData, setUserData] = useState(null);
   const [generatedImage, setGeneratedImage] = useState(null);
@@ -74,7 +77,7 @@ function App() {
   // Función para verificar si existe el usuario con la cédula
   const verifyUser = async (cedula) => {
     try {
-      const response = await axios.post('http://localhost:3001/api/ced', {
+      const response = await axios.post(`${API_URL}/api/ced`, {
         id: cedula
       });
       
@@ -150,7 +153,7 @@ function App() {
 
       try {
         console.log(`Enviando foto para cédula: ${cedula}`);
-        const response = await axios.post(`http://localhost:3001/api/photo/${cedula}`, formData, {
+        const response = await axios.post(`${API_URL}/api/photo/${cedula}`, formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           }
